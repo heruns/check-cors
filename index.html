@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>fetch 检测 cors</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      div,
+      input,
+      button {
+        box-sizing: border-box;
+      }
+      body {
+        padding: 50px 0;
+      }
+      .title {
+        text-align: center;
+      }
+      #app {
+        width: 680px;
+        margin: 0 auto;
+        border: 1px solid #ccc;
+        padding: 20px;
+        margin-top: 20px;
+      }
+      [v-cloak] {
+        display: none;
+      }
+      .examples {
+        margin-bottom: 20px;
+        color: gray;
+      }
+      .example {
+        margin-top: 10px;
+      }
+      .example-url {
+        margin-right: 20px;
+      }
+      input[type="text"] {
+        height: 30px;
+        font-size: 14px;
+        padding: 0 10px;
+      }
+      textarea {
+        width: 100%;
+        font-size: 14px;
+        padding: 0 10px;
+        line-height: 1.5;
+        box-sizing: border-box;
+      }
+      .url-input {
+        width: 240px;
+      }
+      .select {
+        height: 30px;
+        font-size: 14px;
+      }
+      button {
+        padding: 0 15px;
+        height: 30px;
+        line-height: 30px;
+        font-size: 16px;
+        display: inline-block;
+        cursor: pointer;
+      }
+      button + button {
+        margin-left: 20px;
+      }
+      input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+      }
+      .res-header-cors {
+        color: #e6a23c;
+      }
+      .status-success {
+        color: #67c23a;
+      }
+      .status-error {
+        color: #f56c6c;
+      }
+      .row {
+        margin-top: 20px;
+      }
+      .body-label {
+        height: 30px;
+        line-height: 30px;
+        margin-bottom: 10px;
+        font-weight: bold;
+      }
+      .label {
+        font-weight: bold;
+      }
+      .format-btn {
+        float: right;
+      }
+      .message {
+        min-width: 200px;
+        height: 40px;
+        line-height: 40px;
+        box-sizing: border-box;
+        position: fixed;
+        left: 50%;
+        top: 50px;
+        transform: translateX(-50%);
+        background-color: #fdf6ec;
+        border: 1px solid #faecd8;
+        color: #e6a23c;
+        border-radius: 4px;
+        overflow: hidden;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        text-align: center;
+      }
+      .res-json {
+        white-space: pre-wrap;
+      }
+
+      .json-editor-label {
+        height: 40px;
+      }
+      .json-editor-top-operation {
+        float: right;
+      }
+      .json-editor-row {
+        display: flex;
+        justify-content: space-between;
+        height: 30px;
+        line-height: 30px;
+      }
+      .json-editor-row + .json-editor-row {
+        margin-top: 12px;
+      }
+      .json-editor-row input[type="text"] {
+        width: 220px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 class="title">通过 fetch API 检测接口是否允许跨域</h1>
+    <div id="app" v-cloak>
+      <div class="examples">
+        <div class="example-title">接口示例：</div>
+        <div class="example" v-for="example in examples" :key="example.url">
+          <span class="example-url">{{example.text}}：{{example.url}}</span>
+          <button @click="useExample(example.url)">输入</button>
+        </div>
+      </div>
+      <!-- 请求 -->
+      <div class="req-box">
+        <input
+          type="text"
+          class="url-input input"
+          v-model="url"
+          placeholder="url"
+        />
+        <label for="pet-select">请求方式：</label>
+        <select class="select" name="pets" v-model="method">
+          <option v-for="method in METHODS" :key="method" :value="method">
+            {{method}}
+          </option>
+        </select>
+        <button @click="send">发送请求</button>
+        <json-editor
+          ref="headerEditor"
+          class="row"
+          label="请求头"
+          :default-value="defaultHeaders"
+        ></json-editor>
+        <json-editor
+          ref="queryEditor"
+          class="row"
+          label="问号参数"
+        ></json-editor>
+        <div class="row" v-show="canSetBody">
+          <div class="body-label">
+            <span>body：</span>
+            <button class="format-btn" @click="formatBody">格式化</button>
+          </div>
+          <textarea
+            class="textarea"
+            rows="4"
+            placeholder="body"
+            v-model.trim="body"
+          ></textarea>
+        </div>
+      </div>
+      <!-- 响应 -->
+      <div v-if="res && res.success" class="res-box">
+        <div class="is-cors row">
+          <span class="label">本次请求是否跨域：</span>{{res.cors.isCors}}
+        </div>
+        <div class="cors-enable row">
+          <span class="label">接口是否支持跨域：</span>{{res.cors.corsEnabled}}
+        </div>
+        <div class="is-cors row">
+          <span class="label">本次请求是否简单请求：</span>{{res.cors.isSimple}}
+        </div>
+        <div class="row">
+          <span class="label">状态码：</span>
+          <span :class="'status-' + res.status.type">
+            {{res.status.text}}
+          </span>
+        </div>
+        <div class="label row">响应头：</div>
+        <div class="res-headers-empty" v-if="!res.headers.length">{}</div>
+        <div class="res-headers" v-if="res.headers.length">
+          <div
+            :class="{'res-header': true,'res-header-cors': header.isCorsHeader}"
+            v-for="header in res.headers"
+          >
+            {{header.key}}: {{header.value}}
+          </div>
+        </div>
+        <div class="label row">响应内容：</div>
+        <div class="res-content" :class="'res-' + res.responseType">
+          <div v-if="res.responseType === 'json'">{{res.content}}</div>
+          <div v-if="res.responseType === 'html'" v-html="res.content"></div>
+        </div>
+      </div>
+      <div v-if="res && !res.success" class="res-box">
+        <div>请求失败</div>
+      </div>
+    </div>
+    <script type="x-template" id="json-editor">
+      <div class="json-editor">
+        <div class="json-editor-label">
+          <span>{{label}}：</span>
+          <div class="json-editor-top-operation">
+            <button @click="editJson" v-if="editType === 'key'">编辑 json</button>
+            <button @click="formatJson" v-if="editType === 'json'">格式化</button>
+            <button @click="editKey" v-if="editType === 'json'">编辑 key-value</button>
+          </div>
+        </div>
+        <template v-if="editType === 'key'">
+          <div class="json-editor-row" v-for="(item, index) in items" :key="item.id">
+            <div class="json-editor-operation">
+              <input type="checkbox" v-model="item.checked">
+              <button @click="removeRow(item)" :disabled="items.length === 1">-</button>
+              <button @click="addRow">+</button>
+            </div>
+            <div class="json-editor-name">
+              <input type="text" v-model.trim="item.name" placeholder="name">
+            </div>
+            <div class="json-editor-value">
+              <input type="text" v-model.trim="item.value" placeholder="value">
+            </div>
+          </div>
+        </template>
+        <textarea v-else class="textarea" rows="4" placeholder="请输入json" v-model.trim="jsonString"></textarea>
+      </div>
+    </script>
+    <script src="./check-cors.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.12/vue.js"></script>
+    <script src="./example.js"></script>
+  </body>
+</html>
