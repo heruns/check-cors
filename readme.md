@@ -1,5 +1,7 @@
 # 通过 `fetch` API 检测接口是否允许跨域
 
+## demo 地址：[https://heruns.github.io/check-cors/](https://heruns.github.io/check-cors/)
+
 ## 功能
 
 通过浏览器的 `fetch` API，检查一个接口是否允许跨域，及判断是否简单请求、获取所有跨域相关的响应头等
@@ -18,6 +20,6 @@
 
 ```javascript
 window.checkCors(url, init).then(({ response, ...cors }) => {
-  console.log(response, cors);
-});
+  console.log(response, cors)
+})
 ```
