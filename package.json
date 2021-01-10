@@ -1,0 +1,26 @@
+{
+  "name": "check-cors",
+  "version": "1.0.0",
+  "description": "通过 fetch API 检测接口是否允许跨域",
+  "main": "check-cors.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "prettier": {
+    "semi": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/heruns/check-cors.git"
+  },
+  "keywords": [
+    "cors",
+    "fetch"
+  ],
+  "author": "heruns",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/heruns/check-cors/issues"
+  },
+  "homepage": "https://github.com/heruns/check-cors#readme"
+}

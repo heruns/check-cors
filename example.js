@@ -154,11 +154,11 @@
         examples: [
           {
             text: "支持跨域",
-            url: "GET:http://localhost:3000/user",
+            url: "GET:https://www.fastmock.site/api/countData",
           },
           {
             text: "不支持跨域",
-            url: "POST:http://localhost:3000/user",
+            url: "GET:https://api.juejin.cn/recommend_api/v1/short_msg/hot",
           },
         ],
         url: "",
@@ -300,6 +300,7 @@
       },
       // 获取响应类型
       getResponseType(response) {
+        if (!response) return ""
         const contentType = response.headers.get("Content-Type")
         if (!contentType) return contentType
         if (contentType.includes("application/json")) {
@@ -311,6 +312,9 @@
       },
       // 获取响应内容
       async getResponseContent(response, responseType) {
+        if (!response) {
+          return ""
+        }
         if (responseType === "json") {
           try {
             const result = await response.json()
@@ -323,6 +327,7 @@
       },
       // 获取所有响应头
       getHeaders(response, corsHeaders) {
+        if (!response) return []
         const headers = []
         for (let [key, value] of response.headers) {
           headers.push({
@@ -335,6 +340,12 @@
       },
       // 获取状态码相关内容
       getStatus(response) {
+        if (!response) {
+          return {
+            text: "请求失败，无法获取到状态码",
+            type: "error",
+          }
+        }
         let type = "info"
         const status = response.status
         if (response.ok) {

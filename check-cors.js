@@ -53,13 +53,19 @@
   }
   /** 判断接口是否跨域 */
   async function checkCors(url, init) {
-    const response = await fetch(url, init);
-    const isCors = response.type === "cors";
-    const corsHeaders = getCorsHeaders(response);
-    let corsEnabled = isCors;
-    if (!isCors) {
-      corsEnabled = Object.keys.length > 0;
-    }
+    let response = null;
+    let isCors = true;
+    let corsHeaders = {};
+    let corsEnabled = false;
+    try {
+      response = await fetch(url, init);
+      isCors = response.type === "cors";
+      corsHeaders = getCorsHeaders(response);
+      let corsEnabled = isCors;
+      if (!isCors) {
+        corsEnabled = Object.keys.length > 0;
+      }
+    } catch (e) {}
     const isSimple = isSimpleRequest(init);
     return {
       response, // fetch 请求完成返回的响应
